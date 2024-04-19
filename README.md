@@ -1,5 +1,5 @@
 # openapi
-Generate an OpenAPI spec using code in go (golang). Support for OpenAPI spec 3.x
+Generate an OpenAPI spec using code in go (golang), serve them easily under `/docs` without any code generation steps. Support for OpenAPI spec 3.x
 
 # restk (rest-kit)
 
