@@ -1,3 +1,3 @@
 module github.com/restk/openapi
 
-go 1.18.0
+go 1.18
