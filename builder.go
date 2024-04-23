@@ -9,7 +9,6 @@ package openapi
 import (
 	"net/http"
 	"reflect"
-	"slices"
 	"strconv"
 )
 
@@ -306,6 +305,7 @@ func (b *Builder) Register(op *Operation) *OperationBuilder {
 }
 
 // FindOperationIdByTag finds the first operation with the tag and returns its id. If nothing is found, this returns an empty string.
+/*
 func (b *Builder) FindOperationIdByTag(tag string) string {
 	for _, path := range b.openAPI.Paths {
 		if path.Get != nil && path.Get.Tags != nil {
@@ -352,6 +352,7 @@ func (b *Builder) FindOperationIdByTag(tag string) string {
 
 	return ""
 }
+*/
 
 // OperationBuilder assists in building an openapi.Operation
 type OperationBuilder struct {
