@@ -17,19 +17,13 @@ var scalarHTML = `
       content="width=device-width, initial-scale=1" />
   </head>
   <body>
-    <!-- Add your own OpenAPI/Swagger spec file URL here: -->
-    <!-- Note: this includes our proxy, you can remove the following line if you do not need it -->
-    <!-- data-proxy-url="https://api.scalar.com/request-proxy" -->
-	<script
-  	id="api-reference"
-  	type="application/json">
-  	{{.Spec}}
-	</script>
-
-    <!-- You can also set a full configuration object like this -->
-    <!-- easier for nested objects -->
+    <script
+      id="api-reference"
+      type="application/json">
+      {{.Spec}}
+    </script>
     <script>
-	  var configuration = {{.Config}}
+      var configuration = {{.Config}}
 
       var apiReference = document.getElementById('api-reference')
       apiReference.dataset.configuration = JSON.stringify(configuration)
