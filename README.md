@@ -1,4 +1,5 @@
 [![Go](https://github.com/restk/openapi/actions/workflows/go.yml/badge.svg)](https://github.com/restk/openapi/actions/workflows/go.yml)
+[![Docs](https://godoc.org/github.com/restk/openapi?status.svg)](https://pkg.go.dev/github.com/restk/openapi?tab=doc)
 
 # openapi
 Generate an OpenAPI spec using code in go (golang), serve them easily under `/docs` without any code generation steps. We support mostly everything in the OpenAPI spec, including callbacks and links. If something is not supported, please open an issue.
