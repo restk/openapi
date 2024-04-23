@@ -4,7 +4,10 @@
 # openapi
 Generate an OpenAPI spec using code in go (golang), serve them easily under `/docs` without any code generation steps. We support mostly everything in the OpenAPI spec, including callbacks and links. If something is not supported, please open an issue.
 
-# OpenAPI Support
+### Go Support
+1.18 and greater
+
+### OpenAPI Support
 - 3.1.0
 - 3.0.x
 
