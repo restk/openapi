@@ -1,12 +1,3 @@
-# openapi
-Generate an OpenAPI spec using code in go (golang), serve them easily under `/docs` without any code generation steps. We support mostly everything in the OpenAPI spec, including callbacks and links. If something is not supported, please open an issue.
-
-# OpenAPI Support
-- 3.1.0
-- 3.0.x
-
-# Basic Usage
-```golang
 package main
 
 import (
@@ -83,34 +74,3 @@ func main() {
 	fmt.Println(string(bytes))
 
 }
-
-
-```
-
-# Creating an API
-
-# Register
-
-# Request
-
-## Params
-
-# Response
-
-# Content Types
-
-# Examples
-
-# Security
-
-# Links
-
-# Callbacks
-
-
-# Credits
-The OpenAPI implementation is taken from https://github.com/danielgtaylor/huma (and credits to @danielgtaylor), we extend it here to be usable outside of Huma via the Builder Pattern.
-
-# restk (rest-kit)
-
-restk helps you rapidly create REST APIs in Golang
