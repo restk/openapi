@@ -146,7 +146,8 @@ openapi.Scalar() returns a []byte which contains text/html. You can serve it und
 		"theme": "purple", // try solarized, moon, mars, saturn
 	})
 
-    //
+	// set content header to text/html
+	// write scalar ([]byte)
 ```
 
 # Creating an API
