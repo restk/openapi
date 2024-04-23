@@ -54,7 +54,7 @@ func main() {
 		Path:   "/login",
 	})
 
-	login.Request().Body(&LoginRequest{})
+	login.Request().Body(LoginRequest{})
 	login.Response(http.StatusOK).ContentType("text/plain").Body(openapi.StringType)
 	login.Response(http.StatusOK).Body(Success{})
 
