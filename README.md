@@ -102,6 +102,53 @@ func main() {
 
 ```
 
+# Serving docs
+
+You can serve docs easily using our helper functions.
+
+## Scalar
+
+### net/http
+```golang
+
+	scalar := openapi.Scalar(openAPI.OpenAPI(), map[string]any{
+		"theme": "purple", // try solarized, moon, mars, saturn
+	})
+
+	docs := func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(scalar)
+	}
+
+	http.HandleFunc("/docs", docs)
+	http.ListenAndServe(":8111", nil)
+
+```
+
+### gin
+```golang
+	scalar := openapi.Scalar(openAPI.OpenAPI(), map[string]any{
+		"theme": "purple", // try solarized, moon, mars, saturn
+	})
+
+	r.GET("/docs", func(c *gin.Context) {
+		c.Header("Content-Type", "text/html")
+		c.Data(http.StatusOK, scalar)
+	})
+```
+
+### anything else
+
+openapi.Scalar() returns a []byte which contains text/html. You can serve it under any HTTP library by writing the bytes and setting the Content-Type header to text/html
+
+```golang
+	scalar := openapi.Scalar(openAPI.OpenAPI(), map[string]any{
+		"theme": "purple", // try solarized, moon, mars, saturn
+	})
+
+    //
+```
+
 # Creating an API
 
 # Register
