@@ -6,6 +6,9 @@ Generate an OpenAPI spec using code in go (golang), serve them easily under `/do
 - 3.0.x
 
 # Basic Usage
+
+Run the below example and go to your browser window at http://localhost:8111/docs
+
 ```golang
 package main
 
@@ -82,8 +85,20 @@ func main() {
 
 	fmt.Println(string(bytes))
 
-}
+	// serve under /docs using scalar (visit http://localhost:8111/docs)
+	scalar := openapi.Scalar(openAPI.OpenAPI(), map[string]any{
+		"theme": "purple",
+	})
 
+	fmt.Println("Serving docs at http://localhost:8111/docs")
+
+	docs := func(w http.ResponseWriter, req *http.Request) {
+		w.Header().Set("Content-Type", "text/html; charset=utf-8")
+		w.Write(scalar)
+	}
+
+	http.HandleFunc("/docs", docs)
+	http.ListenAndServe(":8111", nil)
 
 ```
 
