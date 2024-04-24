@@ -56,6 +56,7 @@ func main() {
 	}
 
 	login := openAPI.Register(&openapi.Operation{
+                OperationID: "loginUser",
 		Method: "POST",
 		Path:   "/login",
 	})
@@ -73,8 +74,9 @@ func main() {
 	}
 
 	getUser := openAPI.Register(&openapi.Operation{
+                OperationID: "getUser",
 		Method: "GET",
-		Path:   "/login/{userId}",
+		Path:   "/users/{userId}",
 	})
 
 	getUser.Request().PathParam("userId", openapi.IntType).Required(true)
@@ -171,21 +173,24 @@ openAPI.License().Name("MIT").URL("myapi.com/license")
 
 # Register (returns an Operation)
 
-To add an endpoint to the API, simply call .Register()
+To add an endpoint to the API, simply call .Register(), make sure to set an OperationID which is used for other functions
 
 ```golang
 post := openAPI.Register(&openapi.Operation{
+  OperationID: "createUser",
   Method: "POST",
   Path:   "/users",
 })
 
 patch := openAPI.Register(&openapi.Operation{
+  OperationID: "patchUser",
   Method: "PATCH",
   Path:   "/users/{id}",
   Tags: []string{"users"},
 })
 
 delete := openAPI.Register(&openapi.Operation{
+  OperationID: "deleteUser",
   Method: "DELETE",
   Path:   "/users/{id}",
 })
@@ -360,6 +365,7 @@ openAPI.Security("OAuth2", []string{"read_users", "write_users"})
 
 // Apply Security (to one operation)
 post := openAPI.Register(&openapi.Operation{
+  OperationID: "createUser",
   Method: "POST",
   Path:   "/users",
 })
@@ -415,6 +421,7 @@ type Event struct {
 }
 
 o := openAPI.Register(&openapi.Operation{
+  OperationID: "eventSubscribe",
   Method: "POST",
   Path:   "/subscribe",
 })
