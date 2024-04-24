@@ -197,7 +197,7 @@ To add a Request to an Operation which is returned by the Register method, you c
 
 ```golang
 
-// You can describe structs via the tags `doc`, `example` and other JSON Schema tags (see Struct Section)
+// You can describe structs via the tags `doc`, `example`, see Struct Tags Table for all tags
 type ExampleStruct struct {
   Name string `json:"name" doc:"name of person" example:"joe" maxLength:"50"`
 }
@@ -262,7 +262,7 @@ You can add a response by calling Response(status)
 
 ```
 
-# Struct Tags (JSON Schema Validation and Doc Tags)
+# Struct Tags
 
 You use tags in structs to define extra information on fields, such as their limits, docs, and examples. See the tag table below for entire list of tags.
 
@@ -272,8 +272,7 @@ type Example struct {
   ID int `json:"id" doc:"ID of User" example:"1"`
 
   // minLength and maxLength
-  Name int `json:"name" doc:"Name of User" example:"joe" minLength:"3" maxLength:"30"`
-
+  Name string `json:"name" doc:"Name of User" example:"joe" minLength:"3" maxLength:"30"`
 }
 ```
 
