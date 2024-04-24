@@ -201,14 +201,12 @@ delete := openAPI.Register(&openapi.Operation{
 To add a Request to an Operation which is returned by the Register method, you can call Request()
 
 ```golang
-
 // You can describe structs via the tags `doc`, `example`, see Struct Tags Table for all tags
 type ExampleStruct struct {
   Name string `json:"name" doc:"name of person" example:"joe" maxLength:"50"`
 }
 
 // set the default content type, note: application/json is already the default content type
-
 .Request().DefaultContentType("application/json")
 
 // override content type for the next Body() call 
@@ -216,6 +214,14 @@ type ExampleStruct struct {
 
 // body (this is served as DefaultContentType("application/json") since ContentType only overrides one Body call)
 .Request().Body(ExampleStruct{})
+
+// override example
+.Request().Body(ExampleStruct{}).Example("{ name: 'joe' }")
+
+// multiple examples
+body := .Request().Body(ExampleStruct{})
+body.AddExample().Value("{ name: 'joe' }")
+body.AddExample().ExternalValue("http://myapi.com/example.json")
 
 // path params
 .Request().PathParam("userId", openapi.IntType).Required(true)
@@ -255,6 +261,11 @@ You can add a response by calling Response(status)
 
 // override example 
 .Response(http.StatusOK).Body(User{}).Example(`{id: 3, name: "joe", age: 5}`)
+
+// multiple examples
+body := .Response(http.StatusOK).Body(User{})
+body.AddExample().Value("{id: 3, name: "joe", age: 5}")
+body.AddExample().ExternalValue("http://myapi.com/user.json")
 
 // headers
 .Response(http.StatusOK).Header("X-Rate-Limit-Remaining", openapi.IntType)
