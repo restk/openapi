@@ -38,11 +38,13 @@ func main() {
 	}
 
 	login := openAPI.Register(&openapi.Operation{
-		Method: "POST",
-		Path:   "/login",
+		OperationID: "loginUser",
+		Method:      "POST",
+		Path:        "/login",
 	})
 
 	login.Request().Body(LoginRequest{})
+
 	login.Response(http.StatusOK).ContentType("text/plain").Body(openapi.StringType)
 	login.Response(http.StatusOK).Body(Success{})
 
@@ -55,8 +57,9 @@ func main() {
 	}
 
 	getUser := openAPI.Register(&openapi.Operation{
-		Method: "GET",
-		Path:   "/login/{userId}",
+		OperationID: "getUser",
+		Method:      "GET",
+		Path:        "/users/{userId}",
 	})
 
 	getUser.Request().PathParam("userId", openapi.IntType).Required(true)

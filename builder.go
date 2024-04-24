@@ -709,43 +709,108 @@ func (ob *OperationBuilder) Callback(event string, op *Operation) *OperationBuil
 // Request returns a RequestBuilder which helps build a request
 func (ob *OperationBuilder) Request() *RequestBuilder {
 	return &RequestBuilder{
-		op:          ob.op,
-		openAPI:     ob.openAPI,
-		contentType: "application/json",
+		op:                 ob.op,
+		openAPI:            ob.openAPI,
+		defaultContentType: "application/json",
+		nextContentType:    "",
 	}
 }
 
 // RequestBuilder helps build a Request
 type RequestBuilder struct {
-	openAPI     *OpenAPI
-	op          *Operation
-	contentType string
+	openAPI *OpenAPI
+	op      *Operation
+
+	defaultContentType string
+	nextContentType    string
 }
 
-// ContentType sets the content type of the Request. By default the contentType is application/json
-func (rb *RequestBuilder) ContentType(contentType string) *RequestBuilder {
-	rb.contentType = contentType
+// DefaultContentType sets the content type for all Body() calls
+func (rb *RequestBuilder) DefaultContentType(contentType string) *RequestBuilder {
+	rb.defaultContentType = contentType
 
 	return rb
 }
 
-// Body sets the RequestBody.
-func (rb *RequestBuilder) Body(f any) *RequestBuilder {
+// ContentType sets the content type of the Request for the next Body() call
+func (rb *RequestBuilder) ContentType(contentType string) *RequestBuilder {
+	rb.nextContentType = contentType
+
+	return rb
+}
+
+// Body sets the RequestBody
+func (rb *RequestBuilder) Body(f any) *RequestBodyBuilder {
 	responseType := reflect.TypeOf(f)
 
 	registry := rb.openAPI.Components.Schemas
 	ref := registry.Schema(responseType, true, "")
 
-	rb.op.RequestBody = &RequestBody{
-		Required: true,
-		Content: map[string]*MediaType{
-			rb.contentType: {
-				Schema: ref,
-			},
-		},
+	var contentType string
+	if rb.nextContentType != "" {
+		contentType = rb.nextContentType
+	} else {
+		contentType = rb.defaultContentType
 	}
 
-	return rb
+	mediaType := &MediaType{
+		Schema: ref,
+	}
+
+	if rb.op.RequestBody == nil {
+		rb.op.RequestBody = &RequestBody{
+			Required: true,
+			Content: map[string]*MediaType{
+				contentType: mediaType,
+			},
+		}
+	} else {
+		rb.op.RequestBody.Content[contentType] = mediaType
+	}
+
+	if rb.nextContentType != "" {
+		rb.nextContentType = ""
+	}
+
+	return &RequestBodyBuilder{
+		mediaTypeBuilder: &MediaTypeBuilder{
+			openAPI:   rb.openAPI,
+			mediaType: mediaType,
+		},
+
+		requestBody: rb.op.RequestBody,
+	}
+}
+
+type RequestBodyBuilder struct {
+	mediaTypeBuilder *MediaTypeBuilder
+	requestBody      *RequestBody
+}
+
+// Description sets the Description for the RequestBody
+func (rbb *RequestBodyBuilder) Description(description string) *RequestBodyBuilder {
+	rbb.requestBody.Description = description
+
+	return rbb
+}
+
+// Required makes the Body required for the Request. By default when you call Body() it is already set to true
+func (rbb *RequestBodyBuilder) Required(required bool) *RequestBodyBuilder {
+	rbb.requestBody.Required = required
+
+	return rbb
+}
+
+// Example sets the example for the body
+func (rbb *RequestBodyBuilder) Example(example string) *RequestBodyBuilder {
+	rbb.mediaTypeBuilder.Example(example)
+
+	return rbb
+}
+
+// AddExample adds an example for the body
+func (rbb *RequestBodyBuilder) AddExample(example string) *ExampleBuilder {
+	return rbb.mediaTypeBuilder.AddExample(example)
 }
 
 // QueryParam adds a query param
