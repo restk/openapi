@@ -196,15 +196,21 @@ delete := openAPI.Register(&openapi.Operation{
 To add a Request to an Operation which is returned by the Register method, you can call Request()
 
 ```golang
+
+// You can describe structs via the tags `doc`, `example` and other JSON Schema tags (see Struct Section)
 type ExampleStruct struct {
-  Name string `json:"name" doc:"name of person" example:"joe"`
+  Name string `json:"name" doc:"name of person" example:"joe" maxLength:"50"`
 }
 
-// body 
-.Request().Body(ExampleStruct{})
+// set the default content type, note: application/json is already the default content type
 
-// override content type which is by default application/xml
+.Request().DefaultContentType("application/json")
+
+// override content type for the next Body() call 
 .Request().ContentType("application/xml").Body(ExampleStruct{})
+
+// body (this is served as DefaultContentType("application/json") since ContentType only overrides one Body call)
+.Request().Body(ExampleStruct{})
 
 // path params
 .Request().PathParam("userId", openapi.IntType).Required(true)
@@ -256,9 +262,76 @@ You can add a response by calling Response(status)
 
 ```
 
-# Content Types
+# Struct Tags (JSON Schema Validation and Doc Tags)
+
+You use tags in structs to define extra information on fields, such as their limits, docs, and examples. See the tag table below for entire list of tags.
+
+```golang
+type Example struct {
+  // doc and example
+  ID int `json:"id" doc:"ID of User" example:"1"`
+
+  // minLength and maxLength
+  Name int `json:"name" doc:"Name of User" example:"joe" minLength:"3" maxLength:"30"`
+
+}
+```
+
+### Tags
+
+| Tag | Description | Example |
+| --- | --- | --- |
+| `doc` | Describe the field | `doc:"Who to greet"` |
+| `format` | Format hint for the field | `format:"date-time"` |
+| `enum` | A comma-separated list of possible values | `enum:"one,two,three"` |
+| `default` | Default value | `default:"123"` |
+| `minimum` | Minimum (inclusive) | `minimum:"1"` |
+| `exclusiveMinimum` | Minimum (exclusive) | `exclusiveMinimum:"0"` |
+| `maximum` | Maximum (inclusive) | `maximum:"255"` |
+| `exclusiveMaximum` | Maximum (exclusive) | `exclusiveMaximum:"100"` |
+| `multipleOf` | Value must be a multiple of this value | `multipleOf:"2"` |
+| `minLength` | Minimum string length | `minLength:"1"` |
+| `maxLength` | Maximum string length | `maxLength:"80"` |
+| `pattern` | Regular expression pattern | `pattern:"[a-z]+"` |
+| `patternDescription` | Description of the pattern used for errors | `patternDescription:"alphanum"` |
+| `minItems` | Minimum number of array items | `minItems:"1"` |
+| `maxItems` | Maximum number of array items | `maxItems:"20"` |
+| `uniqueItems` | Array items must be unique | `uniqueItems:"true"` |
+| `minProperties` | Minimum number of object properties | `minProperties:"1"` |
+| `maxProperties` | Maximum number of object properties | `maxProperties:"20"` |
+| `example` | Example value | `example:"123"` |
+| `readOnly` | Sent in the response only | `readOnly:"true"` |
+| `writeOnly` | Sent in the request only | `writeOnly:"true"` |
+| `deprecated` | This field is deprecated | `deprecated:"true"` |
+| `hidden` | Hide field/param from documentation | `hidden:"true"` |
+| `dependentRequired` | Required fields when the field is present | `dependentRequired:"one,two"` |
+
+
+Built-in string formats:
+
+| Format | Description | Example |
+| --- | --- | --- |
+| `date-time` | Date and time in RFC3339 format | `2021-12-31T23:59:59Z` |
+| `date-time-http` | Date and time in HTTP format | `Fri, 31 Dec 2021 23:59:59 GMT` |
+| `date` | Date in RFC3339 format | `2021-12-31` |
+| `time` | Time in RFC3339 format | `23:59:59` |
+| `email` / `idn-email` | Email address | `kari@example.com` |
+| `hostname` | Hostname | `example.com` |
+| `ipv4` | IPv4 address | `127.0.0.1` |
+| `ipv6` | IPv6 address | `::1` |
+| `uri` / `iri` | URI | `https://example.com` |
+| `uri-reference` / `iri-reference` | URI reference | `/path/to/resource` |
+| `uri-template` | URI template | `/path/{id}` |
+| `json-pointer` | JSON Pointer | `/path/to/field` |
+| `relative-json-pointer` | Relative JSON Pointer | `0/1` |
+| `regex` | Regular expression | `[a-z]+` |
+| `uuid` | UUID | `550e8400-e29b-41d4-a716-446655440000` |
+
 
 # Examples
+
+Examples can be added to structs
+
 
 # Security
 
