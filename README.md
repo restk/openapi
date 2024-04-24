@@ -1,4 +1,4 @@
-[![Go](https://github.com/restk/openapi/actions/workflows/go.yml/badge.svg)](https://github.com/restk/openapi/actions/workflows/go.yml)
+openapi[![Go](https://github.com/restk/openapi/actions/workflows/go.yml/badge.svg)](https://github.com/restk/openapi/actions/workflows/go.yml)
 [![Docs](https://godoc.org/github.com/restk/openapi?status.svg)](https://pkg.go.dev/github.com/restk/openapi?tab=doc)
 
 # openapi
@@ -158,7 +158,7 @@ openapi.Scalar() returns a []byte which contains text/html. You can serve it und
 
 # Creating an API
 
-To create an API, you can call openApi.New(description, version).
+To create an API, you can call `openApi.New(title, version)`
 
 ```golang
 
