@@ -249,7 +249,7 @@ You can add a response by calling Response(status)
 .Response(http.StatusOK).Header("X-Rate-Limit-Remaining", openapi.IntType)
 
 // link
-.Response(http.StatusOK).Body(User{}).Link("GetUserByUserId).
+.Response(http.StatusOK).Body(User{}).Link("GetUserByUserId").
 	OperationId("getUser").
 	Description("The `id` value returned in the response can be used as the `userId` parameter in `GET /users/{userId}`").
         AddParam("userId", "$response.body#/id")
