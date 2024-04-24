@@ -369,6 +369,37 @@ post.Security("OAuth2", []string{"write_users"})
 
 # Links
 
+Links can be added by calling Link() on an Operation, see below example.
+
+```golang
+type User struct {
+  ID int `json:"id"`
+}
+
+createUser := openAPI.Register(&openapi.Operation{
+    OperationID: "createUser",
+    Method: "POST",
+    Path: "/users",
+})
+
+getUser := openAPI.Register(&openapi.Operation{
+    OperationID: "getUser",
+    Method: "GET",
+    Path: "/users/{userId}",
+})
+
+// we call link on the createUser operation which will give us a link to the getUser operation where we can use the returned user.id in the body
+response := createUser.Response(http.StatusOK)
+response.Body(User{})
+
+response.Link("GetUserByUserId").
+	OperationID("getUser").
+	Description("The id value returned in the response can be used as the userId parameter in GET /users/{userId}").
+        AddParam("userId", "$response.body#/id")
+
+
+```
+
 # Callbacks
 
 Callbacks can be added by calling Callback() on an Operation. Callbacks themselves are also an Operation so you can call Request(), Response() on them as usual
