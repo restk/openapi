@@ -371,6 +371,34 @@ post.Security("OAuth2", []string{"write_users"})
 
 # Callbacks
 
+Callbacks can be added by calling Callback() on an Operation. Callbacks themselves are also an Operation so you can call Request(), Response() on them as usual
+
+```golang
+
+type CallbackResponse struct {
+  CallbackURL string `json:"callbackUrl" format:"uri"`
+}
+
+type Event struct {
+  Message string `json:"message"`
+}
+
+o := openAPI.Register(&openapi.Operation{
+  Method: "POST",
+  Path:   "/subscribe",
+})
+
+o.Response(http.StatusOK).Body(&CallbackResponse{})
+
+callback := o.Callback("myEvent", &openapi.Operation{
+  Method: "POST",
+  Path:   "{$request.body#/callbackUrl}",
+})
+
+callback.Request().Body(&Event{})
+callback.Response(200).Body(openapi.StringType).Example("Your server returns this code if it accepts the callback")
+
+```
 
 # Credits
 The OpenAPI implementation is taken from https://github.com/danielgtaylor/huma (and credits to @danielgtaylor), we extend it here to be usable outside of Huma via the Builder Pattern.
