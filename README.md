@@ -1,4 +1,4 @@
-openapi[![Go](https://github.com/restk/openapi/actions/workflows/go.yml/badge.svg)](https://github.com/restk/openapi/actions/workflows/go.yml)
+[![Go](https://github.com/restk/openapi/actions/workflows/go.yml/badge.svg)](https://github.com/restk/openapi/actions/workflows/go.yml)
 [![Docs](https://godoc.org/github.com/restk/openapi?status.svg)](https://pkg.go.dev/github.com/restk/openapi?tab=doc)
 
 # openapi
@@ -196,12 +196,13 @@ delete := openAPI.Register(&openapi.Operation{
 To add a Request to an Operation which is returned by the Register method, you can call Request()
 
 ```golang
-type ExampleStruct {
+type ExampleStruct struct {
   Name string `json:"name" doc:"name of person" example:"joe"`
 }
 
 // body 
 .Request().Body(ExampleStruct{})
+
 // override content type which is by default application/xml
 .Request().ContentType("application/xml").Body(ExampleStruct{})
 
