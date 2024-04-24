@@ -334,8 +334,44 @@ Built-in string formats:
 
 # Examples
 
-Examples can be added to structs
+Examples show an example for a type, they can be set in various places
 
+#### Struct
+
+```golang
+type User struct {
+  Name string `json:"name" example:"joe"`
+}
+```
+
+### PathParam / QueryParam / CookieParam and Param
+
+Example below works for all param functions: `PathParam`, `QueryParam`, `CookieParam` and `Param`
+
+```golang
+// single example
+getUser.Request().QueryParam("age", &openapi.IntType).Example("21")
+
+// multiple examples
+param := getUser.Request().QueryParam("age", &openapi.IntType)
+param.AddExample().Value("21")
+param.AddExample().Value("41")
+
+```
+
+### Body 
+
+If you pass a Struct in Body() and that Struct has an example, calling Example() on Body will override the example on the struct.
+
+```golang
+// single
+getUser.Response(http.StatusOK).Body(User{}).Example(`{id: 3, name: "joe", age: 5}`)
+
+// multiple
+bdy := getUser.Response(http.StatusOK).Body(User{}).Example(`{id: 3, name: "joe", age: 5}`)
+bdy.AddExample().Value("{id: 3, name: "joe", age: 5}")
+bdy.AddExample().ExternalValue("http://myapi.com/user-example.json")
+```
 
 # Security
 
