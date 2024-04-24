@@ -158,13 +158,102 @@ openapi.Scalar() returns a []byte which contains text/html. You can serve it und
 
 # Creating an API
 
-# Register
+To create an API, you can call openApi.New(description, version).
+
+```golang
+
+openAPI := openapi.New("My API", "v1.0.0")
+openAPI.Description("My API is a great API")
+openAPI.Server().URL("https://myapi.com").Description("My API URL")
+openAPI.Contact().Name("Joe).Email("joe@gmail.com")
+openAPI.License().Name("MIT").URL("myapi.com/license")
+```
+
+# Register (returns an Operation)
+
+To add an endpoint to the API, simply call .Register()
+
+```golang
+post := openAPI.Register(&openapi.Operation{
+  Method: "POST",
+  Path:   "/users",
+})
+
+patch := openAPI.Register(&openapi.Operation{
+  Method: "PATCH",
+  Path:   "/users/{id}",
+  Tags: []string{"users"},
+})
+
+delete := openAPI.Register(&openapi.Operation{
+  Method: "DELETE",
+  Path:   "/users/{id}",
+})
+```
 
 # Request
 
-## Params
+To add a Request to an Operation which is returned by the Register method, you can call Request()
+
+```golang
+type ExampleStruct {
+  Name string `json:"name" doc:"name of person" example:"joe"`
+}
+
+// body 
+.Request().Body(ExampleStruct{})
+// override content type which is by default application/xml
+.Request().ContentType("application/xml").Body(ExampleStruct{})
+
+// path params
+.Request().PathParam("userId", openapi.IntType).Required(true)
+
+// query params
+.Request().QueryParam("age", &openapi.IntType).Example("12").Description("Age of user") 
+.Request().QueryParam("email", openapi.StringType).
+           Example("joe@gmail.com").
+           Description("Email of user").
+           Required(true)
+
+// query param with multiple examples
+bio := .Request().QueryParam("bio", &openapi.StringType).Description("Bio of user")
+bio.AddExample().Value("I was born in Canada")
+bio.AddExample().Value("I was bron in the U.S")
+
+// cookie param
+.Request().CookieParam("session", &openapi.StringType).Description("Session cookie")
+
+// generic param
+.Request().Param("path", "userId", openAPI.IntType).Required(true)
+```
 
 # Response
+You can add a response by calling Response(status)
+
+```golang
+// basic response
+.Response(http.StatusOK).ContentType("text/plain").Body(openapi.StringType)
+
+// you can add multiple content types for the same Response
+.Response(http.StatusOK).Body(Success{})
+.Response(http.StatusOK).ContentType("text/plain").Body(openapi.StringType)
+
+// error response
+.Response(http.StatusForbidden).Body(Error{})
+
+// override example 
+.Response(http.StatusOK).Body(User{}).Example(`{id: 3, name: "joe", age: 5}`)
+
+// headers
+.Response(http.StatusOK).Header("X-Rate-Limit-Remaining", openapi.IntType)
+
+// link
+.Response(http.StatusOK).Body(User{}).Link("GetUserByUserId).
+	OperationId("getUser").
+	Description("The `id` value returned in the response can be used as the `userId` parameter in `GET /users/{userId}`").
+        AddParam("userId", "$response.body#/id")
+
+```
 
 # Content Types
 
