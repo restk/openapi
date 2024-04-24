@@ -262,6 +262,39 @@ You can add a response by calling Response(status)
 
 # Security
 
+You can add security schemas at the top level, then you can apply them either globally or to an individual operation
+
+```golang
+// Bearer
+openAPI.BearerAuth()
+
+// API key
+openAPI.ApiKeyAuth("Header-For-Api-Key")
+
+// OpenID
+openAPI.OpenID("URL to OpenID Connect URL")
+
+// OAuth2
+openAPI.OAuth2().Implicit().AuthorizationURL("https://api.example.com/oauth2/authorize").Scopes(map[string]string{
+  "read_users":  "read users",
+  "write_users": "write to users",
+})
+
+// Custom Security Schema
+openAPI.SecuritySchema(name, *SecuritySchema)
+
+// Apply security (globally)
+openAPI.Security("OAuth2", []string{"read_users", "write_users"})
+
+// Apply Security (to one operation)
+post := openAPI.Register(&openapi.Operation{
+  Method: "POST",
+  Path:   "/users",
+})
+
+post.Security("OAuth2", []string{"write_users"})
+```
+
 # Links
 
 # Callbacks
