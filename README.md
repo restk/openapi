@@ -166,7 +166,7 @@ To create an API, you can call `openApi.New(title, version)`
 openAPI := openapi.New("My API", "v1.0.0")
 openAPI.Description("My API is a great API")
 openAPI.Server().URL("https://myapi.com").Description("My API URL")
-openAPI.Contact().Name("Joe).Email("joe@gmail.com")
+openAPI.Contact().Name("Joe").Email("joe@gmail.com")
 openAPI.License().Name("MIT").URL("myapi.com/license")
 ```
 
