@@ -36,9 +36,11 @@ func byteForFmt(b []byte) string {
 	return fmt.Sprintf("[]byte{%s}", s)
 }
 
-// expectOrGenerateAndFail will take a function f and verify its output in the expectedOutput map. If it does not exist in the expectedOutput map, it will generate an entry
-// to expectedOutput (and fail the test case). If the output looks good, you can add it to expectedOutput so it can be checked in the future. This allows you to
-// rapidly create test cases without having to manually write them yourself (as long as you verify the output in the failure case add it to the expectedOutputMap)
+// expectOrGenerateAndFail will take a function f and verify its output in the expectedOutput map.
+// If it does not exist in the expectedOutput map, it will generate an entry to expectedOutput (and fail the test case).
+// If the output looks good, you can add it to expectedOutput so it can be checked in the future.
+// This allows you to rapidly create test cases without having to manually write them yourself (as long as you verify
+// the output in the failure case add it to the expectedOutputMap)
 //
 // It's easier to understand with an example:
 //
