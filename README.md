@@ -139,9 +139,8 @@ You can serve docs easily using our helper functions.
 		"theme": "purple", // try solarized, moon, mars, saturn
 	})
 
-	r.GET("/docs", func(c *gin.Context) {
-		c.Header("Content-Type", "text/html")
-		c.Data(http.StatusOK, scalar)
+	router.GET("/docs", func(c *gin.Context) {
+		c.Data(http.StatusOK, "text/html", scalar)
 	})
 ```
 
@@ -167,7 +166,7 @@ To create an API, you can call `openApi.New(title, version)`
 openAPI := openapi.New("My API", "v1.0.0")
 openAPI.Description("My API is a great API")
 openAPI.Server().URL("https://myapi.com").Description("My API URL")
-openAPI.Contact().Name("Joe).Email("joe@gmail.com")
+openAPI.Contact().Name("Joe").Email("joe@gmail.com")
 openAPI.License().Name("MIT").URL("myapi.com/license")
 ```
 
