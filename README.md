@@ -34,7 +34,7 @@ func main() {
 	}
 
 	openAPI := openapi.New("My API", "v1.0.0")
-	openAPI.Description("My API is a great API")
+	openAPI.Description("My API description can be placed here.")
 	openAPI.Server().URL("https://myapi.com").Description("My API URL")
 
 	// define security
