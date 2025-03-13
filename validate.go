@@ -486,9 +486,26 @@ func Validate(r Registry, s *Schema, path *PathBuffer, mode ValidateMode, v any,
 		} else if vv, ok := v.(map[any]any); ok {
 			handleMapAny(r, s, path, mode, vv, res)
 		} else {
+			rt := reflect.TypeOf(v)
+			if rt.Kind() == reflect.Ptr {
+				if reflect.ValueOf(v).IsNil() {
+					if !s.Nullable {
+						res.Add(path, v, "expected object, got nil")
+					}
+					return
+				}
+				rt = rt.Elem()
+			}
+
+			if rt.Kind() == reflect.Struct {
+				validateStruct(r, s, path, mode, v, res)
+				return
+			}
+
 			res.Add(path, v, "expected object")
 			return
 		}
+
 	}
 
 	if len(s.Enum) > 0 {
@@ -889,4 +906,235 @@ func validateUUID(s string) error {
 	}
 
 	return nil
+}
+
+// validateStruct validates a struct against the schema
+func validateStruct(r Registry, s *Schema, path *PathBuffer, mode ValidateMode, v any, res *ValidateResult) {
+	val := reflect.ValueOf(v)
+
+	// Handle pointers by dereferencing them
+	if val.Kind() == reflect.Ptr {
+		if val.IsNil() {
+			if s.Nullable {
+				return // Nil pointer to a struct is equivalent to null
+			}
+			res.Add(path, v, "expected object, got nil")
+			return
+		}
+		val = val.Elem()
+	}
+
+	// Ensure we're dealing with a struct
+	if val.Kind() != reflect.Struct {
+		res.Add(path, v, "expected struct")
+		return
+	}
+
+	// Get the type of the struct for field iteration
+	typ := val.Type()
+
+	// Apply min/max properties validation if specified
+	if s.MinProperties != nil {
+		// Count exported fields
+		exportedFieldCount := 0
+		for i := 0; i < typ.NumField(); i++ {
+			if typ.Field(i).IsExported() {
+				exportedFieldCount++
+			}
+		}
+		if exportedFieldCount < *s.MinProperties {
+			res.Add(path, v, s.msgMinProperties)
+		}
+	}
+	if s.MaxProperties != nil {
+		// Count exported fields
+		exportedFieldCount := 0
+		for i := 0; i < typ.NumField(); i++ {
+			if typ.Field(i).IsExported() {
+				exportedFieldCount++
+			}
+		}
+		if exportedFieldCount > *s.MaxProperties {
+			res.Add(path, v, s.msgMaxProperties)
+		}
+	}
+
+	// Validate properties defined in the schema
+	for _, propName := range s.propertyNames {
+		propSchema := s.Properties[propName]
+
+		// Handle read/write-only flags
+		readOnly := propSchema.ReadOnly
+		writeOnly := propSchema.WriteOnly
+		for propSchema.Ref != "" {
+			propSchema = r.SchemaFromRef(propSchema.Ref)
+		}
+
+		// Find the corresponding field in the struct
+		var fieldValue reflect.Value
+		var found bool
+
+		// Look through all fields to find the matching JSON name
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+
+			jsonTag := field.Tag.Get("json")
+			if jsonTag == "" {
+				// If no json tag, use the field name
+				if strings.EqualFold(field.Name, propName) {
+					fieldValue = val.Field(i)
+					found = true
+					break
+				}
+			} else {
+				// Parse the json tag
+				parts := strings.Split(jsonTag, ",")
+				if parts[0] == propName {
+					fieldValue = val.Field(i)
+					found = true
+					break
+				}
+			}
+		}
+
+		// Handle required property validation
+		if !found {
+			if !s.requiredMap[propName] {
+				continue
+			}
+			if (mode == ModeWriteToServer && readOnly) ||
+				(mode == ModeReadFromServer && writeOnly) {
+				// These are not required for the current mode.
+				continue
+			}
+			res.Add(path, v, s.msgRequired[propName])
+			continue
+		}
+
+		// Skip nil pointers for non-required or nullable fields
+		if fieldValue.Kind() == reflect.Ptr && fieldValue.IsNil() {
+			if !s.requiredMap[propName] || s.Nullable {
+				continue
+			}
+		}
+
+		// Get the actual value to validate
+		var fieldInterface any
+		if fieldValue.IsValid() && fieldValue.CanInterface() {
+			fieldInterface = fieldValue.Interface()
+		} else {
+			// Skip validating unexported fields
+			continue
+		}
+
+		// Check dependent required fields
+		if fieldInterface != nil && s.DependentRequired[propName] != nil {
+			for _, dependent := range s.DependentRequired[propName] {
+				// Find the dependent field in the struct
+				var dependentFound bool
+				for i := 0; i < typ.NumField(); i++ {
+					field := typ.Field(i)
+					if !field.IsExported() {
+						continue
+					}
+
+					jsonTag := field.Tag.Get("json")
+					if jsonTag == "" {
+						if strings.EqualFold(field.Name, dependent) {
+							dependentField := val.Field(i)
+							if dependentField.IsValid() && !dependentField.IsZero() {
+								dependentFound = true
+								break
+							}
+						}
+					} else {
+						parts := strings.Split(jsonTag, ",")
+						if parts[0] == dependent {
+							dependentField := val.Field(i)
+							if dependentField.IsValid() && !dependentField.IsZero() {
+								dependentFound = true
+								break
+							}
+						}
+					}
+				}
+
+				if !dependentFound {
+					res.Add(path, v, s.msgDependentRequired[propName][dependent])
+				}
+			}
+		}
+
+		// Validate the field against its schema
+		path.Push(propName)
+		Validate(r, propSchema, path, mode, fieldInterface, res)
+		path.Pop()
+	}
+
+	// Handle additional properties validation
+	if addl, ok := s.AdditionalProperties.(bool); ok && !addl {
+		// No additional properties allowed - we'd need to check if there are
+		// fields in the struct that aren't defined in the schema
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+
+			// Get the JSON field name
+			jsonTag := field.Tag.Get("json")
+			var fieldName string
+			if jsonTag == "" {
+				fieldName = field.Name
+			} else {
+				parts := strings.Split(jsonTag, ",")
+				fieldName = parts[0]
+				if fieldName == "-" {
+					continue // Skip fields that are not serialized
+				}
+			}
+
+			// Check if this field is defined in the schema
+			if _, ok := s.Properties[fieldName]; !ok {
+				path.Push(fieldName)
+				res.Add(path, v, "unexpected property")
+				path.Pop()
+			}
+		}
+	} else if addlSchema, ok := s.AdditionalProperties.(*Schema); ok {
+		// Additional properties are allowed but must match schema
+		// For structs, this is trickier as we need to find fields not in the schema
+		for i := 0; i < typ.NumField(); i++ {
+			field := typ.Field(i)
+			if !field.IsExported() {
+				continue
+			}
+
+			// Get the JSON field name
+			jsonTag := field.Tag.Get("json")
+			var fieldName string
+			if jsonTag == "" {
+				fieldName = field.Name
+			} else {
+				parts := strings.Split(jsonTag, ",")
+				fieldName = parts[0]
+				if fieldName == "-" {
+					continue // Skip fields that are not serialized
+				}
+			}
+
+			// If field is not in schema properties, validate against additionalProperties schema
+			if _, ok := s.Properties[fieldName]; !ok {
+				fieldValue := val.Field(i)
+				if fieldValue.CanInterface() {
+					path.Push(fieldName)
+					Validate(r, addlSchema, path, mode, fieldValue.Interface(), res)
+					path.Pop()
+				}
+			}
+		}
+	}
 }
