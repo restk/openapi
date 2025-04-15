@@ -179,19 +179,21 @@ post := openAPI.Register(&openapi.Operation{
   OperationID: "createUser",
   Method: "POST",
   Path:   "/users",
+  Tags: []string{"Users"} // tags group operations together so they show up on the same header under the docs page
 })
 
 patch := openAPI.Register(&openapi.Operation{
   OperationID: "patchUser",
   Method: "PATCH",
   Path:   "/users/{id}",
-  Tags: []string{"users"},
+  Tags: []string{"Users"}
 })
 
 delete := openAPI.Register(&openapi.Operation{
   OperationID: "deleteUser",
   Method: "DELETE",
   Path:   "/users/{id}",
+  Tags: []string{"Users"}
 })
 ```
 
