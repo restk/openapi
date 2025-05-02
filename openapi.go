@@ -56,13 +56,32 @@ func isEmptyValue(v reflect.Value) bool {
 	return false
 }
 
+// isNilValue returns true if the given value is nil.
+func isNilValue(v any) bool {
+	if v == nil {
+		return true
+	}
+
+	// Nil is typed and may not always match above, so for some types we can
+	// use reflection instead. This is a bit slower, but works.
+	// https://www.calhoun.io/when-nil-isnt-equal-to-nil/
+	// https://go.dev/doc/faq#nil_error
+	vv := reflect.ValueOf(v)
+	switch vv.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+		return vv.IsNil()
+	}
+
+	return false
+}
+
 // marshalJSON marshals a list of fields and their values into JSON. It supports
 // inlined extensions.
 func marshalJSON(fields []jsonFieldInfo, extensions map[string]any) ([]byte, error) {
 	value := make(map[string]any, len(extensions)+len(fields))
 
 	for _, v := range fields {
-		if v.omit == omitNil && v.value == nil {
+		if v.omit == omitNil && isNilValue(v.value) {
 			continue
 		}
 		if v.omit == omitEmpty {
@@ -825,16 +844,6 @@ type Operation struct {
 	// Path is the URL path for this operation
 	Path string `yaml:"-"`
 
-	// Metadata is a map of arbitrary data that can be attached to the operation.
-	// This can be used to store custom data, such as custom settings for
-	// functions which generate operations.
-	// Metadata map[string]any `yaml:"-"`
-
-	// Middlewares is a list of middleware functions to run before the handler.
-	// This is useful for adding custom logic to operations, such as logging,
-	// authentication, or rate limiting.
-	// Middlewares Middlewares `yaml:"-"`
-
 	// --- OpenAPI fields ---
 
 	// Tags is a list of tags for API documentation control. Tags can be used for
@@ -881,7 +890,23 @@ type Operation struct {
 	// Callbacks is a map of possible out-of band callbacks related to the parent
 	// operation. The key is a unique identifier for the Callback Object. Each
 	// value in the map is a Callback Object that describes a request that may be
-	// initiated by the API provider and the expected responses.
+	// initiated by the API provider and the expected responses. The Callback
+	// Object consists of a map of possible request URL expressions to PathItem
+	// objects describing the request.
+	//
+	// 	callbacks:
+	// 	  myName:
+	// 	    '{$request.body#/url}':
+	// 	      post:
+	// 	        requestBody:
+	// 	          description: callback payload
+	// 	          content:
+	// 	            application/json:
+	// 	              schema:
+	// 	                $ref: '#/components/schemas/SomePayload'
+	// 	        responses:
+	// 	          '200':
+	// 	            description: callback response
 	Callbacks map[string]map[string]*PathItem `yaml:"callbacks,omitempty"`
 
 	// Deprecated declares this operation to be deprecated. Consumers SHOULD
@@ -919,7 +944,7 @@ func (o *Operation) MarshalJSON() ([]byte, error) {
 		{"responses", o.Responses, omitEmpty},
 		{"callbacks", o.Callbacks, omitEmpty},
 		{"deprecated", o.Deprecated, omitEmpty},
-		{"security", o.Security, omitEmpty},
+		{"security", o.Security, omitNil},
 		{"servers", o.Servers, omitEmpty},
 	}, o.Extensions)
 }
@@ -1142,6 +1167,7 @@ type SecurityScheme struct {
 	// Scheme is REQUIRED. The name of the HTTP Authorization scheme to be used in
 	// the Authorization header as defined in [RFC7235]. The values used SHOULD be
 	// registered in the IANA Authentication Scheme registry.
+	// See: http://www.iana.org/assignments/http-authschemes/http-authschemes.xhtml
 	Scheme string `yaml:"scheme,omitempty"`
 
 	// BearerFormat is a hint to the client to identify how the bearer token is
@@ -1470,7 +1496,7 @@ func (o *OpenAPI) MarshalJSON() ([]byte, error) {
 		{"paths", o.Paths, omitEmpty},
 		{"webhooks", o.Webhooks, omitEmpty},
 		{"components", o.Components, omitEmpty},
-		{"security", o.Security, omitEmpty},
+		{"security", o.Security, omitNil},
 		{"tags", o.Tags, omitEmpty},
 		{"externalDocs", o.ExternalDocs, omitEmpty},
 	}, o.Extensions)
