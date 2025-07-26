@@ -445,13 +445,16 @@ func (rb *ResponseBuilder) ContentType(contentType string) *ResponseBuilder {
 	return rb
 }
 
-// Body adds a body. f is the type that is used for the body's schema. f can be a struct, slice, map, or a basic type. For basic types, you can use our
-// helper methods such as openapi.IntType, openapi.StringType, openapi.UintType, etc. (see types.go for all basic types.)
-func (rb *ResponseBuilder) Body(f any) *MediaTypeBuilder {
+// BodyWithIgnoredFields sets the response body but ignores the supplied fields from the documentation (fieldsToIgnore is the JSON tag of the field)
+func (rb *ResponseBuilder) BodyWithIgnoredFields(f any, fieldsToIgnore []string) *MediaTypeBuilder {
 	responseType := reflect.TypeOf(f)
 
 	registry := rb.openAPI.Components.Schemas
 	schema := registry.Schema(responseType, true, "")
+
+	if len(fieldsToIgnore) > 0 {
+		removeSchemaFields(schema, fieldsToIgnore)
+	}
 
 	var contentType string
 	var resetNextContentType bool
@@ -480,6 +483,13 @@ func (rb *ResponseBuilder) Body(f any) *MediaTypeBuilder {
 		openAPI:   rb.openAPI,
 		mediaType: rb.response.Content[contentType],
 	}
+
+}
+
+// Body adds a body. f is the type that is used for the body's schema. f can be a struct, slice, map, or a basic type. For basic types, you can use our
+// helper methods such as openapi.IntType, openapi.StringType, openapi.UintType, etc. (see types.go for all basic types.)
+func (rb *ResponseBuilder) Body(f any) *MediaTypeBuilder {
+	return rb.BodyWithIgnoredFields(f, []string{})
 }
 
 type MediaTypeBuilder struct {
@@ -739,12 +749,16 @@ func (rb *RequestBuilder) ContentType(contentType string) *RequestBuilder {
 	return rb
 }
 
-// Body sets the RequestBody
-func (rb *RequestBuilder) Body(f any) *RequestBodyBuilder {
+// BodyWithIgnoredFields sets the RequestBody but ignores the supplied fields from the docs (fieldsToIgnore is the JSON tag of the field)
+func (rb *RequestBuilder) BodyWithIgnoredFields(f any, fieldsToIgnore []string) *RequestBodyBuilder {
 	responseType := reflect.TypeOf(f)
 
 	registry := rb.openAPI.Components.Schemas
-	ref := registry.Schema(responseType, true, "")
+	schema := registry.Schema(responseType, true, "")
+
+	if len(fieldsToIgnore) > 0 {
+		removeSchemaFields(schema, fieldsToIgnore)
+	}
 
 	var contentType string
 	if rb.nextContentType != "" {
@@ -754,7 +768,7 @@ func (rb *RequestBuilder) Body(f any) *RequestBodyBuilder {
 	}
 
 	mediaType := &MediaType{
-		Schema: ref,
+		Schema: schema,
 	}
 
 	if rb.op.RequestBody == nil {
@@ -780,6 +794,11 @@ func (rb *RequestBuilder) Body(f any) *RequestBodyBuilder {
 
 		requestBody: rb.op.RequestBody,
 	}
+}
+
+// Body sets the RequestBody
+func (rb *RequestBuilder) Body(f any) *RequestBodyBuilder {
+	return rb.BodyWithIgnoredFields(f, []string{})
 }
 
 type RequestBodyBuilder struct {
@@ -960,4 +979,31 @@ func (b *Builder) Registry() Registry {
 // OpenAPI returns the OpenAPI struct.
 func (b *Builder) OpenAPI() *OpenAPI {
 	return b.openAPI
+}
+
+// removeSchemaFields takes a *Schema and removes a set of properties. This is used to hide specific fields
+// at runtime and not have to generate separate schema types for ignored fields.
+func removeSchemaFields(schema *Schema, fieldNames []string) {
+	if schema == nil || schema.Properties == nil {
+		return
+	}
+
+	for _, fieldName := range fieldNames {
+		delete(schema.Properties, fieldName)
+	}
+
+	newRequired := []string{}
+	for _, r := range schema.Required {
+		skip := false
+		for _, fieldName := range fieldNames {
+			if r == fieldName {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			newRequired = append(newRequired, r)
+		}
+	}
+	schema.Required = newRequired
 }
