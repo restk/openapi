@@ -73,13 +73,13 @@ type mapRegistry struct {
 	aliases map[reflect.Type]reflect.Type
 }
 
-func (r *mapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *Schema {
+func (r *mapRegistry) SchemaWithName(t reflect.Type, allowRef bool, name string) *Schema {
 	origType := t
 	t = deref(t)
 
 	alias, ok := r.aliases[t]
 	if ok {
-		return r.Schema(alias, allowRef, hint)
+		return r.Schema(alias, allowRef, name)
 	}
 
 	getsRef := t.Kind() == reflect.Struct
@@ -93,8 +93,6 @@ func (r *mapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *Schema
 		// Special case: type provides its own schema
 		getsRef = false
 	}
-
-	name := r.namer(origType, hint)
 
 	if getsRef {
 		if s, ok := r.schemas[name]; ok {
@@ -125,6 +123,11 @@ func (r *mapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *Schema
 		return &Schema{Ref: r.prefix + name}
 	}
 	return s
+
+}
+
+func (r *mapRegistry) Schema(t reflect.Type, allowRef bool, hint string) *Schema {
+	return r.SchemaWithName(t, allowRef, r.namer(t, hint))
 }
 
 func (r *mapRegistry) SchemaFromRef(ref string) *Schema {
